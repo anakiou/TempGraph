@@ -28,21 +28,33 @@ public class MainActivity extends Activity implements SensorEventListener {
 	private GraphicalView mChart;
 	private XYMultipleSeriesDataset mDataset = new XYMultipleSeriesDataset();
 	private XYMultipleSeriesRenderer mRenderer = new XYMultipleSeriesRenderer();
+	
 	private XYSeries mTempSeries;
 	private XYSeries mHumSeries;
+	private XYSeries mProxSeries;
+	private XYSeries mPresSeries;
+	
 	private XYSeriesRenderer mTempRenderer;
 	private XYSeriesRenderer mHumRenderer;
+	private XYSeriesRenderer mProxRenderer;
+	private XYSeriesRenderer mPresRenderer;
 
 	private SensorManager mSensorManager;
 	private Sensor mTemperature;
 	private Sensor mHumidity;
+	private Sensor mPressure;
+	private Sensor mProximity;
 
 	private void initChart() {
 		mTempSeries = new XYSeries("Ambient Temperature");
 		mHumSeries = new XYSeries("Humidity");
+		mProxSeries = new XYSeries("Proximity");
+		mPresSeries = new XYSeries("Pressure");
 		
 		mDataset.addSeries(mTempSeries);
 		mDataset.addSeries(mHumSeries);
+		mDataset.addSeries(mProxSeries);
+		mDataset.addSeries(mPresSeries);
 		
 		mTempRenderer = new XYSeriesRenderer();
 		mTempRenderer.setColor(Color.RED);
@@ -51,6 +63,14 @@ public class MainActivity extends Activity implements SensorEventListener {
 		mHumRenderer = new XYSeriesRenderer();
 		mHumRenderer.setColor(Color.BLUE);
 		mHumRenderer.setPointStyle(PointStyle.DIAMOND);
+		
+		mProxRenderer = new XYSeriesRenderer();
+		mProxRenderer.setColor(Color.MAGENTA);
+		mProxRenderer.setPointStyle(PointStyle.SQUARE);
+		
+		mPresRenderer = new XYSeriesRenderer();
+		mPresRenderer.setColor(Color.GREEN);
+		mPresRenderer.setPointStyle(PointStyle.POINT);
 
 		mRenderer.setAxisTitleTextSize(40);
 		mRenderer.setChartTitleTextSize(40);
@@ -63,7 +83,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 		mRenderer.setYTitle("Temperature/Humidity");
 		mRenderer.setXAxisMin(0);
 		mRenderer.setXAxisMax(60);
-		mRenderer.setYAxisMin(10);
+		mRenderer.setYAxisMin(0);
 		mRenderer.setYAxisMax(100);
 		mRenderer.setAxesColor(Color.LTGRAY);
 		mRenderer.setLabelsColor(Color.LTGRAY);
@@ -77,6 +97,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		
 		mRenderer.addSeriesRenderer(mTempRenderer);
 		mRenderer.addSeriesRenderer(mHumRenderer);
+		mRenderer.addSeriesRenderer(mProxRenderer);
+		mRenderer.addSeriesRenderer(mPresRenderer);
 	}
 
 	protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +107,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 		mTemperature = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
 		mHumidity= mSensorManager.getDefaultSensor(Sensor.TYPE_RELATIVE_HUMIDITY);
+		mProximity = mSensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
+		mPressure = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
 	}
 
 	@Override
@@ -100,14 +124,21 @@ public class MainActivity extends Activity implements SensorEventListener {
 		if(now.get(Calendar.SECOND) == 0){
 			mTempSeries.clear();
 			mHumSeries.clear();
+			mProxSeries.clear();
+			mPresSeries.clear();
 		}
-		
-		
+			
 		if (type == Sensor.TYPE_AMBIENT_TEMPERATURE) {
 			mTempSeries.add(now.get(Calendar.SECOND), reading);
 			mChart.repaint();
 		}else if(type == Sensor.TYPE_RELATIVE_HUMIDITY){
 			mHumSeries.add(now.get(Calendar.SECOND), reading);
+			mChart.repaint();
+		}else if (type == Sensor.TYPE_PROXIMITY) {
+			mProxSeries.add(now.get(Calendar.SECOND), reading);
+			mChart.repaint();
+		} else if (type == Sensor.TYPE_PRESSURE) {
+			mPresSeries.add(now.get(Calendar.SECOND), reading/10);
 			mChart.repaint();
 		}
 		
@@ -118,6 +149,8 @@ public class MainActivity extends Activity implements SensorEventListener {
 		
 		mSensorManager.registerListener(this, mTemperature, SensorManager.SENSOR_DELAY_NORMAL);
 		mSensorManager.registerListener(this, mHumidity, SensorManager.SENSOR_DELAY_NORMAL);
+		mSensorManager.registerListener(this, mProximity, SensorManager.SENSOR_DELAY_NORMAL);
+		mSensorManager.registerListener(this, mPressure, SensorManager.SENSOR_DELAY_NORMAL);
 		
 		LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
 		if (mChart == null) {
